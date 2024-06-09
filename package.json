@@ -1,18 +1,20 @@
 {
-  "name": "misc-serverless",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "misc-server",
+  "version": "0.0.1",
+  "main": "app.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo Building the Functions",
-    "start": "node ./netlify/functions/api.js"
+    "start": "node server.js",
+    "start:nodemon": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "description": "",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "serverless-http": "^3.2.0"
+    "puppeteer": "^22.10.0"
   }
 }
