@@ -22,13 +22,19 @@ app.get('/', (req, res) => {
   res.json('Hi');
 });
 
-app.use('/daily-rk-time', async (req, res) => {
-  await sendTimings();
-  res.status(200).json('Success');
+app.get('/daily-rk-time', async (req, res, next) => {
+  try {
+    await sendTimings();
+    res.status(200).json('Success');
+  } catch (err) {
+    console.log(`error status is ${err.status}`);
+    console.error(err.message);
+    next(err);
+  }
 });
 
 app.use((err, req, res, next) => {
-  res.status(500).json({ message: err.message });
+  res.status(err.status || 500).json({ message: err.message });
 });
 
 export default app;
