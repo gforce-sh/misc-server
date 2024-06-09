@@ -14,18 +14,19 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/', (req, res, next) => {
-  console.log('A new request received at ' + Date.now());
+  console.log(req.url);
+  console.log(`A new request for ${req.url} received at ${Date.now()}`);
   next();
 });
 
 app.get('/', (req, res) => {
-  res.json('Hi');
+  res.json('Hello world!');
 });
 
 app.get('/daily-rk-time', async (req, res, next) => {
   try {
     await sendTimings();
-    res.status(200).json('Success');
+    res.status(200).json('success');
   } catch (err) {
     console.log(`error status is ${err.status}`);
     console.error(err.message);

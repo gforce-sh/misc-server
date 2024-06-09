@@ -49,11 +49,14 @@ export const sendTimings = async () => {
     }&text=${encodeURIComponent(timings)}`
   )
     .then((res) => {
-      console.log('Successfully send Telegram msg');
+      console.log('Successfully sent Telegram msg');
       return res;
     })
     .catch((err) => {
-      console.error('Something went wrong', err);
+      console.error(
+        'Something went wrong in sending request to Telegram server.'
+      );
+      throw err;
     });
   return;
 };
