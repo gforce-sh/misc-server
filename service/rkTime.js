@@ -17,7 +17,7 @@ const getTimings = async () => {
     const timings = Array.from(
       document.querySelectorAll('.dpMuhurtaCardTiming')
     ).map((element) => element.textContent)[0];
-    console.log(dateTimeArr, timings);
+
     const day = [
       'Monday',
       'Tuesday',
@@ -34,7 +34,7 @@ const getTimings = async () => {
     return `RK: ${timings}, ${day}${date}`;
   });
 
-  console.log(data);
+  console.log(`For ${day}${date}`);
 
   await browser.close();
 

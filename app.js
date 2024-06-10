@@ -28,7 +28,6 @@ app.get('/daily-rk-time', async (req, res, next) => {
     await sendTimings();
     res.status(200).json('success');
   } catch (err) {
-    console.log(`error status is ${err.status}`);
     console.error(err.message);
     next(err);
   }
