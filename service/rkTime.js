@@ -1,5 +1,7 @@
 import puppeteer from 'puppeteer';
 
+import { sendGenericMsg } from './generic.js';
+
 const getTimings = async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -34,8 +36,6 @@ const getTimings = async () => {
     return `RK: ${timings}, ${day}${date}`;
   });
 
-  console.log(`For ${day}${date}`);
-
   await browser.close();
 
   return data;
@@ -43,20 +43,5 @@ const getTimings = async () => {
 
 export const sendTimings = async () => {
   const timings = await getTimings();
-  await fetch(
-    `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage?chat_id=${
-      process.env.CHAT_ID
-    }&text=${encodeURIComponent(timings)}`
-  )
-    .then((res) => {
-      console.log('Successfully sent Telegram msg');
-      return res;
-    })
-    .catch((err) => {
-      console.error(
-        'Something went wrong in sending request to Telegram server.'
-      );
-      throw err;
-    });
-  return;
+  await sendGenericMsg(timings, process.env.CHAT_ID);
 };

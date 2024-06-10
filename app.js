@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 
 import { sendTimings } from './service/rkTime.js';
+import { sendGenericMsg } from './service/generic.js';
+import { sendDoggoInfo } from './service/nc.js';
 
 dotenv.config();
 
@@ -26,6 +28,26 @@ app.get('/', (req, res) => {
 app.get('/daily-rk-time', async (req, res, next) => {
   try {
     await sendTimings();
+    res.status(200).json('success');
+  } catch (err) {
+    console.error(err.message);
+    next(err);
+  }
+});
+
+app.get('/nc-custom-text', async (req, res, next) => {
+  try {
+    await sendGenericMsg(req.query.text, process.env.N_CHAT_ID);
+    res.status(200).json('success');
+  } catch (err) {
+    console.error(err.message);
+    next(err);
+  }
+});
+
+app.get('/nc-doggo', async (req, res, next) => {
+  try {
+    await sendDoggoInfo();
     res.status(200).json('success');
   } catch (err) {
     console.error(err.message);
