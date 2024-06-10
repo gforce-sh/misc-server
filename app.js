@@ -16,7 +16,6 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/', (req, res, next) => {
-  console.log(req.url);
   console.log(`A new request for ${req.url} received at ${Date.now()}`);
   next();
 });
@@ -55,8 +54,23 @@ app.get('/nc-doggo', async (req, res, next) => {
   }
 });
 
-app.use((err, req, res, next) => {
+app.use(async (err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message });
+  if (req.url === '/daily-rk-time') {
+    console.log(
+      'There was an error in the /daily-rk-time endpoint process. Trying once more post failure.'
+    );
+    await sendTimings();
+    console.log('2nd attempt for daily-rk-time post failure completed');
+  }
+
+  if (req.url === '/nc-doggo') {
+    console.log(
+      'There was an error in the /nc-doggo endpoint process. Trying once more post failure.'
+    );
+    await sendDoggoInfo();
+    console.log('2nd attempt for nc-doggo post failure completed');
+  }
 });
 
 export default app;
