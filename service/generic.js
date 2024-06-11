@@ -25,7 +25,7 @@ export const sendPhoto = async ({ photoUrl, caption, chatId }) => {
     )}&caption=${encodeURIComponent(caption)}`
   )
     .then((res) => {
-      console.log('Successfully sent Telegram msg');
+      console.log('Successfully sent Telegram photo');
       return res;
     })
     .catch((err) => {

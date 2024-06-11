@@ -63,14 +63,6 @@ app.use(async (err, req, res, next) => {
     await sendTimings();
     console.log('2nd attempt for daily-rk-time post failure completed');
   }
-
-  if (req.url === '/nc-doggo') {
-    console.log(
-      'There was an error in the /nc-doggo endpoint process. Trying once more post failure.'
-    );
-    await sendDoggoInfo();
-    console.log('2nd attempt for nc-doggo post failure completed');
-  }
 });
 
 export default app;
