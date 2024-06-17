@@ -133,3 +133,6 @@ dist
 .netlify
 
 .cache
+
+# remove this to update server cache settings
+.puppeteerrc.cjs

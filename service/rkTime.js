@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer';
 import { sendGenericMsg } from './generic.js';
 
 const getTimings = async () => {
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: 'shell' });
   const page = await browser.newPage();
   await page.goto(process.env.TARGET_URL);
   await page.setViewport({ width: 1080, height: 1024 });
@@ -43,5 +43,6 @@ const getTimings = async () => {
 
 export const sendTimings = async () => {
   const timings = await getTimings();
+  console.log('Obtained RK timings: ', timings);
   await sendGenericMsg(timings, process.env.CHAT_ID);
 };
