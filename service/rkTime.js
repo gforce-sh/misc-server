@@ -5,6 +5,15 @@ import { sendGenericMsg } from './generic.js';
 const getTimings = async () => {
   const browser = await puppeteer.launch({ headless: 'shell' });
   const page = await browser.newPage();
+  await page.setRequestInterception(true);
+  page.on('request', (request) => {
+    if (request.url() === process.env.TARGET_URL) {
+      request.continue();
+    } else {
+      request.abort();
+    }
+  });
+
   await page.goto(process.env.TARGET_URL);
   await page.setViewport({ width: 1080, height: 1024 });
 
@@ -15,7 +24,9 @@ const getTimings = async () => {
       document.querySelectorAll('.dpMuhurtaCardInfo')
     )
       .map((element) => element.textContent)[0]
-      .split(','); // dpMuhurtaCardTiming for only time
+      .split(',');
+    const date = dateTimeArr[1];
+
     const timings = Array.from(
       document.querySelectorAll('.dpMuhurtaCardTiming')
     ).map((element) => element.textContent)[0];
@@ -31,7 +42,6 @@ const getTimings = async () => {
     ].reduce((acc, curr) =>
       dateTimeArr[0].includes(curr) ? curr.slice(0, 3) : acc
     );
-    const date = dateTimeArr[1];
 
     return `RK: ${timings}, ${day}${date}`;
   });

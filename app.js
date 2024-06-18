@@ -16,7 +16,12 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/', (req, res, next) => {
-  console.log(`A new request for ${req.url} received at ${Date.now()}`);
+  const date = new Date();
+  console.log(
+    `A new request for ${
+      req.url
+    } received at ${date.getHours()} ${date.getMinutes()} ${date.getSeconds()}`
+  );
   next();
 });
 
@@ -28,6 +33,12 @@ app.get('/daily-rk-time', async (req, res, next) => {
   try {
     await sendTimings();
     res.status(200).json('success');
+    const date = new Date();
+    console.log(
+      `${
+        req.url
+      } request completed at ${date.getHours()} ${date.getMinutes()} ${date.getSeconds()}`
+    );
   } catch (err) {
     console.error(err.message);
     next(err);
