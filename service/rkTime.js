@@ -54,5 +54,16 @@ const getTimings = async () => {
 export const sendTimings = async () => {
   const timings = await getTimings();
   console.log('Obtained RK timings: ', timings);
-  await sendGenericMsg(timings, process.env.CHAT_ID);
+
+  console.log('Attempting to send timings to GS...');
+
+  try {
+    await sendGenericMsg(timings, process.env.CHAT_ID);
+  } catch (err) {
+    console.error(`Error sending telegram message. Printing full error below.`);
+    console.error(err);
+    console.log('Trying to send timings again...');
+    await sendGenericMsg(timings, process.env.CHAT_ID);
+    console.log('Successfully sent timings in the second try.');
+  }
 };

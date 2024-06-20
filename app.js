@@ -57,7 +57,8 @@ app.get('/nc-custom-text', async (req, res, next) => {
 
 app.get('/nc-doggo', async (req, res, next) => {
   try {
-    await sendDoggoInfo();
+    const { only } = req.query;
+    await sendDoggoInfo(only);
     res.status(200).json('success');
   } catch (err) {
     console.error(err.message);
