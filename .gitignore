@@ -136,3 +136,5 @@ dist
 
 # remove this to update server cache settings
 .puppeteerrc.cjs
+
+.idea

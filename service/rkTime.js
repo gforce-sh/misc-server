@@ -61,9 +61,14 @@ export const sendTimings = async () => {
     await sendGenericMsg(timings, process.env.CHAT_ID);
   } catch (err) {
     console.error(`Error sending telegram message. Printing full error below.`);
-    console.error(err);
-    console.log('Trying to send timings again...');
+    console.log(JSON.stringify(err));
+
+    console.log("err.errors>>>", err.errors)
+
+    console.log('Trying to send timings again after 5s...');
+    await new Promise((resolve) => setTimeout(resolve, 5000))
     await sendGenericMsg(timings, process.env.CHAT_ID);
+
     console.log('Successfully sent timings in the second try.');
   }
 };

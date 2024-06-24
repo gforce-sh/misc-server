@@ -10,7 +10,7 @@ export const sendDoggoInfo = async (only) => {
       console.error('Error fetching dog facts from dog-api.kinduff.com');
       throw err;
     });
-  console.log('info', info);
+
   const all = !only;
 
   if (only === 'gs' || all) {
