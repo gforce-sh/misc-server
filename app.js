@@ -1,8 +1,9 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import cron from 'node-cron';
 
-import { sendTimings } from './service/rkTime.js';
+import { sendTimings, getTimings, getCronTimings } from './service/rkTime.js';
 import { sendGenericMsg } from './service/generic.js';
 import { sendDoggoInfo } from './service/nc.js';
 
@@ -14,6 +15,14 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+let start;
+let end;
+
+let startCron;
+let endCron;
+
+const cronOptions = { timezone: "Asia/Singapore" }
 
 app.use('/', (req, res, next) => {
   const date = new Date();
@@ -31,8 +40,34 @@ app.get('/', (req, res) => {
 
 app.get('/daily-rk-time', async (req, res, next) => {
   try {
-    await sendTimings();
+    const timings = await getTimings()
+
+    const [startTime, endTime] = getCronTimings(timings)
+    start = startTime
+    end = endTime
+
+    console.log(`Setting crons with ${start} and ${end}`);
+    if(!!start && !!end) {
+      startCron = cron.schedule(`${start} * * *`, async () => {
+        console.log("Executing RKt start cron...");
+        await sendTimings("RKt in 5");
+        console.log("RKt start cron complete");
+        }, cronOptions)
+
+      endCron = cron.schedule(`${end} * * *`, async () => {
+        console.log("Executing RKt end cron...");
+        await sendTimings("jEnded RKt");
+        console.log("RKt end cron complete");
+        }, cronOptions)
+    } else {
+      throw new Error("Crons not set as either start or end time missing.")
+    }
+    console.log("Crons set");
+
+    await sendTimings(timings);
+
     res.status(200).json('success');
+
     const date = new Date();
     console.log(
       `${
@@ -41,6 +76,15 @@ app.get('/daily-rk-time', async (req, res, next) => {
     );
   } catch (err) {
     console.error(err.message);
+
+    console.log("Stopping crons...");
+    startCron?.stop()
+    endCron?.stop()
+    console.log("Crons stopped");
+
+    start = null
+    end = null
+
     next(err);
   }
 });
@@ -67,14 +111,7 @@ app.get('/nc-doggo', async (req, res, next) => {
 });
 
 app.use(async (err, req, res, next) => {
-  res.status(err.status || 500).json({ message: err.message });
-  if (req.url === '/daily-rk-time') {
-    console.log(
-      'There was an error in the /daily-rk-time endpoint process. Trying once more post failure.'
-    );
-    await sendTimings();
-    console.log('2nd attempt for daily-rk-time post failure completed');
-  }
+  res.status(err.code || 500).json({ message: err.message });
 });
 
 export default app;

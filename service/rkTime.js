@@ -1,8 +1,11 @@
 import puppeteer from 'puppeteer';
 
 import { sendGenericMsg } from './generic.js';
+import dayjs from 'dayjs';
 
-const getTimings = async () => {
+const DUMMY_DATE = "2024-01-01"
+
+export const getTimings = async () => {
   const browser = await puppeteer.launch({ headless: 'shell' });
   const page = await browser.newPage();
   await page.setRequestInterception(true);
@@ -29,7 +32,7 @@ const getTimings = async () => {
 
     const timings = Array.from(
       document.querySelectorAll('.dpMuhurtaCardTiming')
-    ).map((element) => element.textContent)[0];
+    )?.map((element) => element.textContent)[0];
 
     const day = [
       'Monday',
@@ -43,20 +46,17 @@ const getTimings = async () => {
       dateTimeArr[0].includes(curr) ? curr.slice(0, 3) : acc
     );
 
-    return `RK: ${timings}, ${day}${date}`;
+    return `RK: ${timings}, ${day}${date}`.replaceAll(" 0", " ");
   });
 
   await browser.close();
 
+  console.log('Obtained RK timings: ', data);
   return data;
 };
 
-export const sendTimings = async () => {
-  const timings = await getTimings();
-  console.log('Obtained RK timings: ', timings);
-
+export const sendTimings = async (timings) => {
   console.log('Attempting to send timings to GS...');
-
   try {
     await sendGenericMsg(timings, process.env.CHAT_ID);
   } catch (err) {
@@ -72,3 +72,13 @@ export const sendTimings = async () => {
     console.log('Successfully sent timings in the second try.');
   }
 };
+
+export const getCronTimings = (timingStr) => {
+  const [start, end] = timingStr.split(',')[0].slice(4).split(" to ");
+  const startTime = dayjs(`${DUMMY_DATE} ${start}`).subtract(5, 'minute').format("mm H")
+  const endTime = dayjs(`${DUMMY_DATE} ${end}`).format("mm H")
+
+  console.log("Obtained cron start and end timings (mm:h): ", startTime, ", ", endTime);
+
+  return [startTime, endTime]
+}
