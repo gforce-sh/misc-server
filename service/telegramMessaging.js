@@ -1,4 +1,4 @@
-import { wait } from '../utils';
+import { wait } from '../utils/index.js';
 
 const sendTeleMsgOnce = async (txt, chatId) => {
   await fetch(
