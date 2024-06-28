@@ -1,9 +1,9 @@
 import puppeteer from 'puppeteer';
 
-import { sendGenericMsg } from './generic.js';
+import { sendTeleMsg } from './telegramMessaging.js';
 import dayjs from 'dayjs';
 
-const DUMMY_DATE = "2024-01-01"
+const DUMMY_DATE = '2024-01-01';
 
 export const getTimings = async () => {
   const browser = await puppeteer.launch({ headless: 'shell' });
@@ -24,14 +24,14 @@ export const getTimings = async () => {
 
   const data = await page.evaluate(() => {
     const dateTimeArr = Array.from(
-      document.querySelectorAll('.dpMuhurtaCardInfo')
+      document.querySelectorAll('.dpMuhurtaCardInfo'),
     )
       .map((element) => element.textContent)[0]
       .split(',');
     const date = dateTimeArr[1];
 
     const timings = Array.from(
-      document.querySelectorAll('.dpMuhurtaCardTiming')
+      document.querySelectorAll('.dpMuhurtaCardTiming'),
     )?.map((element) => element.textContent)[0];
 
     const day = [
@@ -43,10 +43,10 @@ export const getTimings = async () => {
       'Saturday',
       'Sunday',
     ].reduce((acc, curr) =>
-      dateTimeArr[0].includes(curr) ? curr.slice(0, 3) : acc
+      dateTimeArr[0].includes(curr) ? curr.slice(0, 3) : acc,
     );
 
-    return `RK: ${timings}, ${day}${date}`.replaceAll(" 0", " ");
+    return `RK: ${timings}, ${day}${date}`.replaceAll(' 0', ' ');
   });
 
   await browser.close();
@@ -56,29 +56,24 @@ export const getTimings = async () => {
 };
 
 export const sendTimings = async (timings) => {
-  console.log('Attempting to send timings to GS...');
-  try {
-    await sendGenericMsg(timings, process.env.CHAT_ID);
-  } catch (err) {
-    console.error(`Error sending telegram message. Printing full error below.`);
-    console.log(JSON.stringify(err));
-
-    console.log("err.errors>>>", err.errors)
-
-    console.log('Trying to send timings again after 5s...');
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-    await sendGenericMsg(timings, process.env.CHAT_ID);
-
-    console.log('Successfully sent timings in the second try.');
-  }
+  console.log('(1) Attempting to send timings to GS...');
+  await sendTeleMsg(timings, process.env.CHAT_ID);
+  console.log('Timings sent successfully');
 };
 
 export const getCronTimings = (timingStr) => {
-  const [start, end] = timingStr.split(',')[0].slice(4).split(" to ");
-  const startTime = dayjs(`${DUMMY_DATE} ${start}`).subtract(5, 'minute').format("mm H")
-  const endTime = dayjs(`${DUMMY_DATE} ${end}`).format("mm H")
+  const [start, end] = timingStr.split(',')[0].slice(4).split(' to ');
+  const startTime = dayjs(`${DUMMY_DATE} ${start}`)
+    .subtract(5, 'minute')
+    .format('mm H');
+  const endTime = dayjs(`${DUMMY_DATE} ${end}`).format('mm H');
 
-  console.log("Obtained cron start and end timings (mm:h): ", startTime, ", ", endTime);
+  console.log(
+    'Obtained cron start and end timings (mm:h): ',
+    startTime,
+    ', ',
+    endTime,
+  );
 
-  return [startTime, endTime]
-}
+  return [startTime, endTime];
+};

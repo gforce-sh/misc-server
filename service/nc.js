@@ -1,4 +1,4 @@
-import { sendGenericMsg } from './generic.js';
+import { sendTeleMsg } from './telegramMessaging.js';
 
 export const sendDoggoInfo = async (only) => {
   const info = await fetch('https://dog-api.kinduff.com/api/facts?numer=1')
@@ -14,32 +14,12 @@ export const sendDoggoInfo = async (only) => {
   const all = !only;
 
   if (only === 'gs' || all) {
-    console.log('Sending msg to GS...');
-    try {
-      await sendGenericMsg(info.facts[0], process.env.CHAT_ID);
-    } catch (err) {
-      console.error(
-        `Error sending telegram message to GS. Printing full error below.`
-      );
-      console.error(err);
-      console.log('Trying to send message again...');
-      await sendGenericMsg(info.facts[0], process.env.CHAT_ID);
-      console.log('Successfully sent msg in the second try.');
-    }
+    console.log('(1) Attempting to send doggo msg to GS...');
+    await sendTeleMsg(info.facts[0], process.env.CHAT_ID);
   }
 
   if (only === 'nc' || all) {
-    console.log('Sending msg to NC...');
-    try {
-      await sendGenericMsg(info.facts[0], process.env.N_CHAT_ID);
-    } catch (err) {
-      console.error(
-        `Error sending telegram message to NC. Printing full error below.`
-      );
-      console.error(err);
-      console.log('Trying to send message again...');
-      await sendGenericMsg(info.facts[0], process.env.N_CHAT_ID);
-      console.log('Successfully sent msg in the second try.');
-    }
+    console.log('(1) Attempting to send doggo msg to NC...');
+    await sendTeleMsg(info.facts[0], process.env.N_CHAT_ID);
   }
 };

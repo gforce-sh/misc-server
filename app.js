@@ -4,7 +4,7 @@ import cors from 'cors';
 import cron from 'node-cron';
 
 import { sendTimings, getTimings, getCronTimings } from './service/rkTime.js';
-import { sendGenericMsg } from './service/generic.js';
+import { sendTeleMsg } from './service/telegramMessaging.js';
 import { sendDoggoInfo } from './service/nc.js';
 
 dotenv.config();
@@ -22,14 +22,14 @@ let end;
 let startCron;
 let endCron;
 
-const cronOptions = { timezone: "Asia/Singapore" }
+const cronOptions = { timezone: 'Asia/Singapore' };
 
 app.use('/', (req, res, next) => {
   const date = new Date();
   console.log(
     `A new request for ${
       req.url
-    } received at ${date.getHours()} ${date.getMinutes()} ${date.getSeconds()}`
+    } received at ${date.getHours()} ${date.getMinutes()} ${date.getSeconds()}`,
   );
   next();
 });
@@ -40,50 +40,52 @@ app.get('/', (req, res) => {
 
 app.get('/daily-rk-time', async (req, res, next) => {
   try {
-    const timings = await getTimings()
+    const timings = await getTimings();
 
-    const [startTime, endTime] = getCronTimings(timings)
-    start = startTime
-    end = endTime
+    const [startTime, endTime] = getCronTimings(timings);
+    start = startTime;
+    end = endTime;
 
     console.log(`Setting crons with ${start} and ${end}`);
-    if(!!start && !!end) {
-      startCron = cron.schedule(`${start} * * *`, async () => {
-        console.log("Executing RKt start cron...");
-        await sendTimings("RKt in 5");
-        console.log("RKt start cron complete");
-        }, cronOptions)
+    if (!!start && !!end) {
+      startCron = cron.schedule(
+        `${start} * * *`,
+        async () => {
+          console.log('Executing RKt start cron...');
+          await sendTimings('RKt in 5');
+          console.log('RKt start cron complete');
+        },
+        cronOptions,
+      );
 
-      endCron = cron.schedule(`${end} * * *`, async () => {
-        console.log("Executing RKt end cron...");
-        await sendTimings("jEnded RKt");
-        console.log("RKt end cron complete");
-        }, cronOptions)
+      endCron = cron.schedule(
+        `${end} * * *`,
+        async () => {
+          console.log('Executing RKt end cron...');
+          await sendTimings('jEnded RKt');
+          console.log('RKt end cron complete');
+        },
+        cronOptions,
+      );
     } else {
-      throw new Error("Crons not set as either start or end time missing.")
+      throw new Error('Crons not set as either start or end time missing.');
     }
-    console.log("Crons set");
+    console.log('Crons set');
 
     await sendTimings(timings);
 
     res.status(200).json('success');
-
-    const date = new Date();
-    console.log(
-      `${
-        req.url
-      } request completed at ${date.getHours()} ${date.getMinutes()} ${date.getSeconds()}`
-    );
+    console.log('Daily-rk-time request successfully completed');
   } catch (err) {
     console.error(err.message);
 
-    console.log("Stopping crons...");
-    startCron?.stop()
-    endCron?.stop()
-    console.log("Crons stopped");
+    console.log('Stopping crons...');
+    startCron?.stop();
+    endCron?.stop();
+    console.log('Crons stopped');
 
-    start = null
-    end = null
+    start = null;
+    end = null;
 
     next(err);
   }
@@ -91,7 +93,7 @@ app.get('/daily-rk-time', async (req, res, next) => {
 
 app.get('/nc-custom-text', async (req, res, next) => {
   try {
-    await sendGenericMsg(req.query.text, process.env.N_CHAT_ID);
+    await sendTeleMsg(req.query.text, process.env.N_CHAT_ID);
     res.status(200).json('success');
   } catch (err) {
     console.error(err.message);
