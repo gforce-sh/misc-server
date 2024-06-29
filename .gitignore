@@ -138,3 +138,5 @@ dist
 .puppeteerrc.cjs
 
 .idea
+
+fixture

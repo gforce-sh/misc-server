@@ -6,6 +6,7 @@ import cron from 'node-cron';
 import { sendTimings, getTimings, getCronTimings } from './service/rkTime.js';
 import { sendTeleMsg } from './service/telegramMessaging.js';
 import { sendDoggoInfo } from './service/nc.js';
+import { validateUser, handleIncomingMsg } from './service/chatBot.js';
 
 dotenv.config();
 
@@ -46,13 +47,12 @@ app.get('/daily-rk-time', async (req, res, next) => {
     start = startTime;
     end = endTime;
 
-    console.log(`Setting crons with ${start} and ${end}`);
     if (!!start && !!end) {
       startCron = cron.schedule(
         `${start} * * *`,
         async () => {
           console.log('Executing RKt start cron...');
-          await sendTimings('RKt in 5');
+          await sendTimings('RKt starting 5');
           console.log('RKt start cron complete');
         },
         cronOptions,
@@ -62,7 +62,7 @@ app.get('/daily-rk-time', async (req, res, next) => {
         `${end} * * *`,
         async () => {
           console.log('Executing RKt end cron...');
-          await sendTimings('jEnded RKt');
+          await sendTimings('RKt ended');
           console.log('RKt end cron complete');
         },
         cronOptions,
@@ -109,6 +109,28 @@ app.get('/nc-doggo', async (req, res, next) => {
   } catch (err) {
     console.error(err.message);
     next(err);
+  }
+});
+
+app.post('/gs-bot-messaged', async (req, res) => {
+  try {
+    const { body } = req;
+
+    const isStranger = validateUser(body);
+    if (isStranger) {
+      res.status(200).json('ok');
+      return;
+    }
+
+    await handleIncomingMsg(body.message);
+
+    res.status(200).json('ok');
+  } catch (err) {
+    console.log(err.message);
+    console.error(JSON.stringify(err));
+
+    // Send success to prevent telegram from re-calling hook
+    res.status(200).json('ok');
   }
 });
 

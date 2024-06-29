@@ -5,19 +5,20 @@ import dayjs from 'dayjs';
 
 const DUMMY_DATE = '2024-01-01';
 
-export const getTimings = async () => {
+export const getTimings = async (url) => {
+  const reqUrl = url || process.env.TARGET_URL;
   const browser = await puppeteer.launch({ headless: 'shell' });
   const page = await browser.newPage();
   await page.setRequestInterception(true);
   page.on('request', (request) => {
-    if (request.url() === process.env.TARGET_URL) {
+    if (request.url() === reqUrl) {
       request.continue();
     } else {
       request.abort();
     }
   });
 
-  await page.goto(process.env.TARGET_URL);
+  await page.goto(reqUrl);
   await page.setViewport({ width: 1080, height: 1024 });
 
   await page.waitForSelector('.dpMuhurtaCardTiming');
@@ -58,7 +59,6 @@ export const getTimings = async () => {
 export const sendTimings = async (timings) => {
   console.log('(1) Attempting to send timings to GS...');
   await sendTeleMsg(timings, process.env.CHAT_ID);
-  console.log('Timings sent successfully');
 };
 
 export const getCronTimings = (timingStr) => {

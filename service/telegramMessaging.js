@@ -39,7 +39,7 @@ export const sendTeleMsg = async (txt, chatId) => {
   }
 };
 
-export const sendPhoto = async ({ photoUrl, caption, chatId }) => {
+export const sendTelePhoto = async ({ photoUrl, caption, chatId }) => {
   await fetch(
     `https://api.telegram.org/bot${
       process.env.BOT_TOKEN
