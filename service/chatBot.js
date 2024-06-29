@@ -74,7 +74,13 @@ export const handleIncomingMsg = async (message) => {
   try {
     const command = text.split(' ')[0];
     const func = commandFuncMapping[command];
-    await func(message);
+
+    if (!!func) {
+      await func(message);
+    } else {
+      console.log(`${command} is an unknown command`);
+      return;
+    }
   } catch (err) {
     await sendTeleMsg('Something went wrong :(', chat.id);
     throw err;
