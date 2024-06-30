@@ -2,13 +2,10 @@ import dayjs from 'dayjs';
 
 import { sendTeleMsg } from './telegramMessaging.js';
 import { getTimings } from './rkTime.js';
+import { isAuthorizedUser } from '../utils/index.js';
 
 export const validateUser = (body) => {
-  if (
-    ![process.env.CHAT_ID, process.env.N_CHAT_ID].includes(
-      `${body.message.chat.id}`,
-    )
-  ) {
+  if (!isAuthorizedUser(`${body.message.from.id}`)) {
     console.log('Received message from unknown user. Printing details below:');
     console.info(JSON.stringify(body));
     return true;

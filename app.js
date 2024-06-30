@@ -9,20 +9,14 @@ import { sendDoggoInfo } from './service/nc.js';
 import { validateUser, handleIncomingMsg } from './service/chatBot.js';
 
 dotenv.config();
-
 console.log('Env is ', process.env.NODE_ENV);
-
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-let start;
-let end;
-
 let startCron;
 let endCron;
-
 const cronOptions = { timezone: 'Asia/Singapore' };
 
 app.use('/', (req, res, next) => {
@@ -44,12 +38,10 @@ app.get('/daily-rk-time', async (req, res, next) => {
     const timings = await getTimings();
 
     const [startTime, endTime] = getCronTimings(timings);
-    start = startTime;
-    end = endTime;
 
-    if (!!start && !!end) {
+    if (!!startTime && !!endTime) {
       startCron = cron.schedule(
-        `${start} * * *`,
+        `${startTime} * * *`,
         async () => {
           console.log('Executing RKt start cron...');
           await sendTimings('RKt starting 5');
@@ -59,7 +51,7 @@ app.get('/daily-rk-time', async (req, res, next) => {
       );
 
       endCron = cron.schedule(
-        `${end} * * *`,
+        `${endTime} * * *`,
         async () => {
           console.log('Executing RKt end cron...');
           await sendTimings('RKt ended');
@@ -83,9 +75,6 @@ app.get('/daily-rk-time', async (req, res, next) => {
     startCron?.stop();
     endCron?.stop();
     console.log('Crons stopped');
-
-    start = null;
-    end = null;
 
     next(err);
   }
