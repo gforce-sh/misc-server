@@ -46,6 +46,9 @@ app.get('/daily-rk-time', async (req, res, next) => {
           console.log('Executing RKt start cron...');
           await sendTimings('RKt starting 5');
           console.log('RKt start cron complete');
+          startCron?.stop();
+          startCron = null;
+          console.log('RKt start cron stopped and reset');
         },
         cronOptions,
       );
@@ -56,6 +59,9 @@ app.get('/daily-rk-time', async (req, res, next) => {
           console.log('Executing RKt end cron...');
           await sendTimings('RKt ended');
           console.log('RKt end cron complete');
+          endCron?.stop();
+          endCron = null;
+          console.log('RKt end cron stopped and reset');
         },
         cronOptions,
       );
