@@ -4,12 +4,16 @@ import cors from 'cors';
 import cron from 'node-cron';
 
 import { sendTimings, getTimings, getCronTimings } from './service/rkTime.js';
-import { sendTeleMsg } from './service/telegramMessaging.js';
 import { sendDoggoInfo } from './service/nc.js';
-import { validateUser, handleIncomingMsg } from './service/chatBot.js';
+import {
+  validateUser,
+  handleIncomingMsg,
+  logBotCommand,
+} from './service/chatBot.js';
 
 dotenv.config();
 console.log('Env is ', process.env.NODE_ENV);
+
 const app = express();
 
 app.use(express.json());
@@ -40,27 +44,27 @@ app.get('/daily-rk-time', async (req, res, next) => {
     const [startTime, endTime] = getCronTimings(timings);
 
     if (!!startTime && !!endTime) {
+      resetCron(startCron);
       startCron = cron.schedule(
         `${startTime} * * *`,
         async () => {
           console.log('Executing RKt start cron...');
           await sendTimings('RKt starting 5');
           console.log('RKt start cron complete');
-          startCron?.stop();
-          startCron = null;
+          resetCron(startCron);
           console.log('RKt start cron stopped and reset');
         },
         cronOptions,
       );
 
+      resetCron(endCron);
       endCron = cron.schedule(
         `${endTime} * * *`,
         async () => {
           console.log('Executing RKt end cron...');
           await sendTimings('RKt ended');
           console.log('RKt end cron complete');
-          endCron?.stop();
-          endCron = null;
+          resetCron(endCron);
           console.log('RKt end cron stopped and reset');
         },
         cronOptions,
@@ -78,20 +82,10 @@ app.get('/daily-rk-time', async (req, res, next) => {
     console.error(err.message);
 
     console.log('Stopping crons...');
-    startCron?.stop();
-    endCron?.stop();
+    resetCron(startCron);
+    resetCron(endCron);
     console.log('Crons stopped');
 
-    next(err);
-  }
-});
-
-app.get('/nc-custom-text', async (req, res, next) => {
-  try {
-    await sendTeleMsg(req.query.text, process.env.N_CHAT_ID);
-    res.status(200).json('success');
-  } catch (err) {
-    console.error(err.message);
     next(err);
   }
 });
