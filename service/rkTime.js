@@ -2,8 +2,7 @@ import puppeteer from 'puppeteer';
 
 import { sendTeleMsg } from './telegramMessaging.js';
 import dayjs from 'dayjs';
-
-const DUMMY_DATE = '2024-01-01';
+import { dayjsDateObj } from '../utils/index.js';
 
 export const getTimings = async (url) => {
   const reqUrl = url || process.env.TARGET_URL;
@@ -63,13 +62,16 @@ export const sendTimings = async (timings) => {
 
 export const getCronTimings = (timingStr) => {
   const [start, end] = timingStr.split(',')[0].slice(4).split(' to ');
-  const startTime = dayjs(`${DUMMY_DATE} ${start}`)
+
+  const currDate = dayjsDateObj().format('YYYY-MM-DD');
+
+  const startTime = dayjs(`${currDate} ${start}`)
     .subtract(5, 'minute')
-    .format('mm H');
-  const endTime = dayjs(`${DUMMY_DATE} ${end}`).format('mm H');
+    .format('mm H D M');
+  const endTime = dayjs(`${currDate} ${end}`).format('mm H D M');
 
   console.log(
-    'Obtained cron start and end timings (mm:h): ',
+    'Obtained cron start and end timings (mm h D M): ',
     startTime,
     ', ',
     endTime,

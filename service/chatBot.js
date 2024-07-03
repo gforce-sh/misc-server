@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 
 import { sendTeleMsg } from './telegramMessaging.js';
 import { getTimings } from './rkTime.js';
-import { isAuthorizedUser } from '../utils/index.js';
+import { dayjsDateObj, isAuthorizedUser } from '../utils/index.js';
 
 export const validateUser = (body) => {
   if (!isAuthorizedUser(`${body.message.from.id}`)) {
@@ -67,11 +67,7 @@ const onSimpleText = async ({ chatId, text, date, redis }) => {
     return;
   }
 
-  const timestamp = dayjs(
-    new Date(date * 1000).toLocaleString('en-US', {
-      timeZone: 'Asia/Singapore',
-    }),
-  ).format('YYYYMMDDHHmmss');
+  const timestamp = dayjsDateObj(date * 1000).format('YYYYMMDDHHmmss');
 
   await redis
     .lPush(`${chatId}:text`, `${timestamp}: ${text}`)
