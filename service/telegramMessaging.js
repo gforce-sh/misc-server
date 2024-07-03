@@ -1,6 +1,14 @@
 import { wait } from '../utils/index.js';
 
 const sendTeleMsgOnce = async (txt, chatId) => {
+  if (process.env.NO_MESSAGE_MODE === 'true') {
+    console.log(
+      'Telegram message sending invoked in no message mode. Msg: ',
+      txt,
+    );
+    return;
+  }
+
   await fetch(
     `https://api.telegram.org/bot${
       process.env.BOT_TOKEN
@@ -39,7 +47,7 @@ export const sendTeleMsg = async (txt, chatId) => {
   }
 };
 
-export const sendTelePhoto = async ({ photoUrl, caption, chatId }) => {
+export const sendTelePhotoOnce = async ({ photoUrl, caption, chatId }) => {
   await fetch(
     `https://api.telegram.org/bot${
       process.env.BOT_TOKEN

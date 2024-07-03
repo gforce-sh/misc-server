@@ -60,15 +60,51 @@ const onHelp = async (message) => {
   );
 };
 
+const onSimpleText = async ({ chatId, text, date, redis }) => {
+  if (text.length > 1500) {
+    console.log('Received text is too long. It will not be saved');
+    await sendTeleMsg('Message is too long to be saved.', chatId);
+    return;
+  }
+
+  const timestamp = dayjs(
+    new Date(date * 1000).toLocaleString('en-US', {
+      timeZone: 'Asia/Singapore',
+    }),
+  ).format('YYYYMMDDHHmmss');
+
+  await redis
+    .lPush(`${chatId}:text`, `${timestamp}: ${text}`)
+    .then(() => {
+      console.log('Text saved');
+    })
+    .catch((err) => {
+      console.error(
+        'Encountered error in writing user text to DB\n',
+        JSON.stringify(err),
+      );
+      throw err;
+    });
+};
+
 const commandFuncMapping = {
   '/start': onStart,
   '/help': onHelp,
   '/rknd': onRknd,
 };
 
-export const handleIncomingMsg = async (message) => {
-  const { chat, text } = message;
+export const handleIncomingMsg = async (message, redis) => {
+  const { chat, text, date } = message;
   try {
+    if (text[0] !== '/') {
+      if (isAuthorizedUser(chat.id)) {
+        await onSimpleText({ chatId: chat.id, date, text, redis });
+      } else {
+        console.log('User not authorized to save texts, chat id: ', chat.id);
+      }
+      return;
+    }
+
     const command = text.split(' ')[0];
     const func = commandFuncMapping[command];
 
@@ -79,7 +115,15 @@ export const handleIncomingMsg = async (message) => {
       return;
     }
   } catch (err) {
-    await sendTeleMsg('Something went wrong :(', chat.id);
+    await sendTeleMsg('Something went wrong :(');
     throw err;
   }
+};
+
+export const logBotCommand = (text) => {
+  if (text[0] === '/') {
+    console.log('Command received is: ', text.slice(0, 25));
+    return;
+  }
+  console.log('Non-command/simple text received');
 };

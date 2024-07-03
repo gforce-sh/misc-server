@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cron from 'node-cron';
+import { createClient } from 'redis';
 
 import { sendTimings, getTimings, getCronTimings } from './service/rkTime.js';
 import { sendDoggoInfo } from './service/nc.js';
@@ -22,6 +23,19 @@ app.use(cors());
 let startCron;
 let endCron;
 const cronOptions = { timezone: 'Asia/Singapore' };
+let redis;
+
+(async () => {
+  redis = await createClient({
+    password: process.env.REDIS_DB_PASSWORD,
+    socket: {
+      host: process.env.REDIS_DB_HOST,
+      port: process.env.REDIS_DB_PORT,
+    },
+  })
+    .on('error', (err) => console.log('Redis Client Error', err))
+    .connect();
+})();
 
 app.use('/', (req, res, next) => {
   const date = new Date();
@@ -105,13 +119,14 @@ app.post('/gs-bot-messaged', async (req, res) => {
   try {
     const { body } = req;
 
+    logBotCommand(body.message.text);
     const isStranger = validateUser(body);
     if (isStranger) {
       res.status(200).json('ok');
       return;
     }
 
-    await handleIncomingMsg(body.message);
+    await handleIncomingMsg(body.message, redis);
 
     res.status(200).json('ok');
   } catch (err) {
