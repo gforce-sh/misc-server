@@ -6,7 +6,7 @@ export const wait = (ms) =>
 export const isAuthorizedUser = (id) => [process.env.CHAT_ID].includes(`${id}`);
 
 export const resetCron = (crons) => {
-  crons.forEach((cron) => cron.stop());
+  crons.forEach((cron) => cron?.stop());
 };
 
 export const dayjsDateObj = (date) =>
