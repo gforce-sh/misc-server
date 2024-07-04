@@ -9,9 +9,11 @@ export const resetCron = (crons) => {
   crons.forEach((cron) => cron?.stop());
 };
 
-export const dayjsDateObj = (date) =>
-  dayjs(
-    new Date(date).toLocaleString('en-US', {
+export const dayjsDateObj = (unixdate) => {
+  const jsDate = typeof unixdate === 'number' ? new Date(unixdate) : new Date();
+  return dayjs(
+    jsDate.toLocaleString('en-US', {
       timeZone: 'Asia/Singapore',
     }),
   );
+};

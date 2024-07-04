@@ -87,11 +87,18 @@ app.get('/daily-rk-time', async (req, res, next) => {
   } catch (err) {
     console.error(err.message);
 
-    console.log('Stopping crons...');
-    resetCron([startCron, endCron]);
-    startCron = null;
-    endCron = null;
-    console.log('Crons stopped');
+    try {
+      console.log('Stopping crons...');
+      resetCron([startCron, endCron]);
+      startCron = null;
+      endCron = null;
+      console.log('Crons stopped');
+    } catch (error) {
+      console.error(
+        'Error occured when trying to stop crons',
+        JSON.stringify(error),
+      );
+    }
 
     next(err);
   }
