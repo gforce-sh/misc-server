@@ -16,8 +16,10 @@
 - `/start`
 - `/rknd` @params{1} "--date=dd/mm/yyyy"
 - `/help`
-- `/calendarEvent` / `/ce` @params{1} "--date=dd/mm/yyyy"
-- `/getTexts` / `/gt`
+- `/calendarEvent` / `/ce` @params{2} "--date=dd/mm/yyyy" "--reminder={annual/monthly/weekly/daily}"
+- `/getText` / `/gt` @params{1} "--all"
+- `/deleteText` / `/dt` @params{1} "--id={id}"
+- `editText` / `/et` @params{2} "string any" "--id={id}"
 - `none` @params{1} string any
 
 ## Webhook

@@ -126,31 +126,32 @@ export const onCalendarEvent = async (message) => {
 
   const {
     content,
-    args: { date: userSpecifiedDate },
+    args: { date: userSpecifiedDate, reminder },
   } = parseCommandStatement(text);
 
   const saveDate = !!userSpecifiedDate
     ? new Date(userSpecifiedDate).valueOf()
     : date * 1000;
-
   const timestamp = dayjsDateObj(saveDate).format('YYYYMMDDHHmmss');
 
-  console.log(userSpecifiedDate, content);
   await redis
-    .lPush(`${chatId}:calendarEvent`, `${timestamp}: ${content}`)
+    .lPush(
+      `${chatId}:calendarEvent`,
+      `${timestamp}:${reminder ? `${reminder}Reminder:` : ''} ${content}`,
+    )
     .then(() => {
       console.log('Event saved');
     })
     .catch((err) => {
       console.error(
-        'Encountered error in writing event description to DB\n',
-        JSON.stringify(err),
+        'Encountered error in writing event description to DB:\n',
+        err,
       );
       throw err;
     });
 };
 
-const onGetTexts = async (message) => {
+const onGetText = async (message) => {
   const {
     chat: { id: chatId },
     data: callbackData,
@@ -160,18 +161,45 @@ const onGetTexts = async (message) => {
   const isCallback = !!callbackData;
 
   const {
-    args: { full, start, id },
+    args: { all, full, start, id },
   } = parseCommandStatement(isCallback ? callbackData : text);
 
-  console.log(full, start, id, parseInt(start));
+  const userTexts = await redis.lRange(`${chatId}:text`, 0, -1, (err) => {
+    console.log('Error in db operation: in retrieving list: ', err);
+  });
+
+  if (!userTexts.length) {
+    await sendTeleMsg({
+      text: 'No texts found.',
+      chatId,
+    });
+    return;
+  }
+
+  if (all) {
+    for (let i = 0; i < userTexts.length; i++) {
+      await sendTeleMsg({
+        text: `${userTexts[i].slice(0, 50)}...`,
+        chatId,
+        replyMarkup: {
+          inline_keyboard: [
+            [
+              {
+                text: '➕',
+                callback_data: `/gt --full --id=${userTexts[i].split(': ')[0]}`,
+              },
+            ],
+          ],
+        },
+      });
+
+      await wait(100);
+    }
+    return;
+  }
 
   if (full) {
-    const userTexts = await redis.lRange(`${chatId}:text`, 0, -1, (err) => {
-      console.log('Error in db operation: in retrieving list: ', err);
-    });
-
     const content = userTexts.filter((e) => e.split(': ')[0] === id)[0];
-
     await sendTeleMsg({
       text: content.split(': ')[1],
       chatId,
@@ -187,10 +215,6 @@ const onGetTexts = async (message) => {
     startIdx = parseInt(start);
     endIdx = startIdx + BATCH_SIZE;
   }
-
-  const userTexts = await redis.lRange(`${chatId}:text`, 0, -1, (err) => {
-    console.log('Error in db operation: in retrieving list: ', err);
-  });
 
   if (endIdx > userTexts.length) {
     endIdx = userTexts.length;
@@ -245,8 +269,8 @@ const commandFuncMapping = {
   '/rknd': onRknd,
   '/calendarEvent': onCalendarEvent,
   '/ce': onCalendarEvent,
-  '/getTexts': onGetTexts,
-  '/gt': onGetTexts,
+  '/getText': onGetText,
+  '/gt': onGetText,
 };
 
 export const handleIncomingCallback = async (callbackQuery) => {
@@ -303,7 +327,7 @@ export const logBotCommand = (body) => {
   const { text } = message;
 
   if (text[0] === '/') {
-    console.log('Command received is: ', text.slice(0, 25)); // mac length for command word
+    console.log('Command received is: ', text.split(' ')[0]);
     return true;
   }
   console.log('Non-command/simple text received');
