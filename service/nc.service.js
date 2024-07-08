@@ -1,4 +1,4 @@
-import { sendTeleMsg } from './telegramMessaging.js';
+import { sendTeleMsg } from './telegramMessaging.service.js';
 
 export const sendDoggoInfo = async (only) => {
   const info = await fetch('https://dog-api.kinduff.com/api/facts?numer=1')
@@ -15,7 +15,7 @@ export const sendDoggoInfo = async (only) => {
 
   if (only === 'gs' || all) {
     console.log('(1) Attempting to send doggo msg to GS...');
-    await sendTeleMsg(info.facts[0], process.env.CHAT_ID);
+    await sendTeleMsg({ text: info.facts[0], chatId: process.env.CHAT_ID });
   }
 
   if (only === 'nc' || all) {

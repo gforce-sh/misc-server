@@ -14,8 +14,10 @@
 ## Telegram commands
 
 - `/start`
-- `/rknd` @params{1} string "dd/mm/yyyy"
+- `/rknd` @params{1} "--date=dd/mm/yyyy"
 - `/help`
+- `/calendarEvent` / `/ce` @params{1} "--date=dd/mm/yyyy"
+- `/getTexts` / `/gt`
 - `none` @params{1} string any
 
 ## Webhook

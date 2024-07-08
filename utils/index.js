@@ -17,3 +17,29 @@ export const dayjsDateObj = (unixdate) => {
     }),
   );
 };
+
+export const parseCommandStatement = (s) => {
+  if (!s) return {};
+  const sArr = s?.split(' ');
+  const args = {};
+
+  while (sArr[sArr.length - 1].includes('--')) {
+    if (sArr[sArr.length - 1].includes('=')) {
+      const split = sArr[sArr.length - 1].split('=');
+      const name = split[0].slice(2);
+      const value = split[1];
+      args[name] = value;
+      sArr.pop();
+    } else {
+      const name = sArr[sArr.length - 1].slice(2);
+      args[name] = true;
+      sArr.pop();
+    }
+  }
+
+  return {
+    command: sArr[0],
+    content: sArr.slice(1, sArr.length).join(' '),
+    args,
+  };
+};

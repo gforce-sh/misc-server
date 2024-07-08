@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 
-import { sendTeleMsg } from './telegramMessaging.js';
+import { sendTeleMsg } from './telegramMessaging.service.js';
 import dayjs from 'dayjs';
 import { dayjsDateObj } from '../utils/index.js';
 
@@ -57,7 +57,7 @@ export const getTimings = async (url) => {
 
 export const sendTimings = async (timings) => {
   console.log('(1) Attempting to send timings to GS...');
-  await sendTeleMsg(timings, process.env.CHAT_ID);
+  await sendTeleMsg({ text: timings, chatId: process.env.CHAT_ID });
 };
 
 export const getCronTimings = (timingStr) => {
