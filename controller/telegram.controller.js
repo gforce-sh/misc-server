@@ -1,9 +1,12 @@
 import {
+  findRemindersforUser,
   handleIncomingCallback,
   handleIncomingMsg,
   logBotCommand,
   validateUser,
 } from '../service/chatBot.service.js';
+import { sendTeleMsg } from '../service/telegramMessaging.service.js';
+import { wait } from '../utils/index.js';
 
 export const gsBotMessaged = async (req, res) => {
   try {
@@ -22,13 +25,27 @@ export const gsBotMessaged = async (req, res) => {
     } else {
       await handleIncomingCallback(body.callback_query);
     }
-
-    res.status(200).json('ok');
   } catch (err) {
-    console.log(err.message);
     console.error('Printing full error: ', err);
+    throw err;
+  }
+};
 
-    // Send success to prevent telegram from re-calling hook
-    res.status(200).json('ok');
+export const getDaysReminders = async () => {
+  try {
+    const events = await findRemindersforUser(process.env.CHAT_ID);
+
+    if (!events?.length) {
+      console.log('No reminder events found for this day.');
+      return;
+    }
+
+    for (const event of events) {
+      await sendTeleMsg({ text: event, chatId: process.env.CHAT_ID });
+      await wait(100);
+    }
+  } catch (err) {
+    console.error('Printing full error: ', err);
+    throw err;
   }
 };

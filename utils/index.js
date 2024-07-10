@@ -20,6 +20,7 @@ export const dayjsDateObj = (unixdate) => {
 
 export const parseCommandStatement = (s) => {
   if (!s) return {};
+
   const sArr = s?.split(' ');
   const args = {};
 
@@ -42,4 +43,26 @@ export const parseCommandStatement = (s) => {
     content: sArr.slice(1, sArr.length).join(' '),
     args,
   };
+};
+
+export const parseFrontalParams = (s) => {
+  if (!s) return {};
+
+  const args = {};
+
+  const split = s.split(':: ');
+  if (!split[1]) {
+    return { content: split[0] };
+  }
+  const content = split[1];
+  const paramsStr = split[0];
+  const paramsArr = paramsStr.split(':');
+  if (paramsArr?.length) {
+    paramsArr.forEach((param) => {
+      const [name, value] = param.split('=');
+      args[name] = value;
+    });
+  }
+
+  return { content, ...args };
 };

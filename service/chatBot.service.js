@@ -3,7 +3,12 @@ import dayjs from 'dayjs';
 import { redis } from '../redis.js';
 import { sendTeleMsg } from './telegramMessaging.service.js';
 import { getTimings } from './rkTime.service.js';
-import { dayjsDateObj, isAuthorizedUser, wait } from '../utils/index.js';
+import {
+  dayjsDateObj,
+  isAuthorizedUser,
+  parseFrontalParams,
+  wait,
+} from '../utils/index.js';
 import { parseCommandStatement } from '../utils/index.js';
 
 export const validateUser = (body) => {
@@ -47,8 +52,9 @@ const onRknd = async (message) => {
 
   let day;
   const {
-    args: { date: reqDay },
+    args: { date, d },
   } = parseCommandStatement(text);
+  const reqDay = date || d;
 
   if (!!reqDay) {
     console.log('/rknd date arg exists: ', reqDay);
@@ -95,7 +101,7 @@ const onSimpleText = async ({ chatId, text, date }) => {
   const timestamp = dayjsDateObj(date * 1000).format('YYYYMMDDHHmmss');
 
   await redis
-    .lPush(`${chatId}:text`, `${timestamp}: ${text}`)
+    .zAdd(`${chatId}:text`, { score: timestamp, value: text })
     .then(() => {
       console.log('Text saved');
     })
@@ -115,7 +121,7 @@ export const onCalendarEvent = async (message) => {
     date,
   } = message;
 
-  if (text.length > 500) {
+  if (text.length > 1000) {
     console.log('Received event description is too long. It will not be saved');
     await sendTeleMsg({
       text: 'Event description is too long to be saved.',
@@ -126,19 +132,38 @@ export const onCalendarEvent = async (message) => {
 
   const {
     content,
-    args: { date: userSpecifiedDate, reminder },
+    args: {
+      date: userSpecifiedSlashSeparatedDate,
+      d,
+      remind: userSpecifiedRemind,
+      r,
+    },
   } = parseCommandStatement(text);
 
-  const saveDate = !!userSpecifiedDate
-    ? new Date(userSpecifiedDate).valueOf()
-    : date * 1000;
-  const timestamp = dayjsDateObj(saveDate).format('YYYYMMDDHHmmss');
+  const userSpecifiedDate = userSpecifiedSlashSeparatedDate || d;
+  const remind = userSpecifiedRemind || r;
+
+  const isUserSpecifiedDate = typeof userSpecifiedDate === 'string';
+  const remindFreq = remind === true ? 'once' : remind;
+  const timestamp = dayjsDateObj(date * 1000).format('YYYYMMDDHHmmss');
+
+  const [day, month, year] =
+    (isUserSpecifiedDate && userSpecifiedDate.split('/')) || [];
+  const actionDate = isUserSpecifiedDate
+    ? dayjs(`${year}-${month}-${day}`).format('YYYYMMDDHHmmss')
+    : timestamp;
+
+  const showRemind = isUserSpecifiedDate
+    ? !!remindFreq
+    : !!remindFreq && remindFreq !== 'once';
+  const baseParams = `${showRemind ? `remind=${remindFreq}:` : ''}${isUserSpecifiedDate ? `actionDate=${actionDate}:` : ''}`;
+  console.log('base params>', baseParams);
 
   await redis
-    .lPush(
-      `${chatId}:calendarEvent`,
-      `${timestamp}:${reminder ? `${reminder}Reminder:` : ''} ${content}`,
-    )
+    .zAdd(`${chatId}:calendarEvent`, {
+      score: timestamp,
+      value: `${baseParams}${!!baseParams ? ': ' : ''}${content}`,
+    })
     .then(() => {
       console.log('Event saved');
     })
@@ -164,9 +189,14 @@ const onGetText = async (message) => {
     args: { all, full, start, id },
   } = parseCommandStatement(isCallback ? callbackData : text);
 
-  const userTexts = await redis.lRange(`${chatId}:text`, 0, -1, (err) => {
-    console.log('Error in db operation: in retrieving list: ', err);
-  });
+  const userTexts = await redis.zRangeWithScores(
+    `${chatId}:text`,
+    0,
+    -1,
+    (err) => {
+      console.log('Error in db operation: in retrieving list: ', err);
+    },
+  );
 
   if (!userTexts.length) {
     await sendTeleMsg({
@@ -179,14 +209,14 @@ const onGetText = async (message) => {
   if (all) {
     for (let i = 0; i < userTexts.length; i++) {
       await sendTeleMsg({
-        text: `${userTexts[i].slice(0, 50)}...`,
+        text: `${userTexts[i].value.slice(0, 50)}...`,
         chatId,
         replyMarkup: {
           inline_keyboard: [
             [
               {
                 text: '➕',
-                callback_data: `/gt --full --id=${userTexts[i].split(': ')[0]}`,
+                callback_data: `/gt --full --id=${userTexts[i].score}`,
               },
             ],
           ],
@@ -199,9 +229,9 @@ const onGetText = async (message) => {
   }
 
   if (full) {
-    const content = userTexts.filter((e) => e.split(': ')[0] === id)[0];
+    const content = userTexts.filter((e) => e.score === id)[0];
     await sendTeleMsg({
-      text: content.split(': ')[1],
+      text: content.value,
       chatId,
     });
     return;
@@ -230,14 +260,14 @@ const onGetText = async (message) => {
 
   for (let i = startIdx; i < endIdx; i++) {
     const item = userTexts[i];
-    const content = `${item.slice(0, 50)}...`;
+    const content = `${item.value.slice(0, 50)}...`;
 
     const replyMarkup = {
       inline_keyboard: [
         [
           {
             text: '➕',
-            callback_data: `/gt --full --id=${item.split(': ')[0]}`,
+            callback_data: `/gt --full --id=${item.score}`,
           },
           ...((i + 1) % BATCH_SIZE === 0
             ? [
@@ -333,3 +363,76 @@ export const logBotCommand = (body) => {
   console.log('Non-command/simple text received');
   return true;
 };
+
+export const findRemindersforUser = async (chatId) => {
+  if (!chatId) {
+    throw new Error('No chatId provided');
+  }
+  const events = await redis.zRangeWithScores(
+    `${chatId}:calendarEvent`,
+    0,
+    -1,
+    (err) => {
+      console.log('Error in db operation: in retrieving list: ', err);
+    },
+  );
+
+  let filteredEvents = [];
+
+  for (const e of events) {
+    const { content, remind, actionDate } = parseFrontalParams(e.value);
+    const id = e.score;
+    const refDate = actionDate || id;
+
+    switch (remind) {
+      case 'once':
+        if (actionDate && dayjsDateObj().isSame(dayjs(actionDate), 'date')) {
+          filteredEvents.push(content);
+        }
+        break;
+      case 'daily':
+        if (
+          !actionDate ||
+          dayjsDateObj().isAfter(dayjs(actionDate), 'date') ||
+          dayjsDateObj().isSame(dayjs(actionDate), 'date')
+        ) {
+          filteredEvents.push(content);
+        }
+        break;
+      case 'weekly':
+        if (dayjsDateObj().day() === dayjs(refDate).day()) {
+          filteredEvents.push(content);
+        }
+        break;
+      case 'monthly':
+        if (dayjsDateObj().date() === dayjs(refDate).date()) {
+          filteredEvents.push(content);
+        }
+        break;
+      case 'annually':
+        if (
+          dayjsDateObj().date() === dayjs(refDate).date() &&
+          dayjsDateObj().month() === dayjs(refDate).month()
+        ) {
+          filteredEvents.push(content);
+        }
+    }
+  }
+
+  return filteredEvents;
+};
+
+/*
+  // add functionality to edit, delete
+  // To delete:
+  const del = await redis.zRemRangeByScore(
+    `${chatId}:calendarEvent`,
+    '20240629122722',
+    '20240629122722',
+    (err) => {
+      console.log('Error in db operation: in retrieving list: ', err);
+    },
+  );
+
+  console.log('del', del);
+*/

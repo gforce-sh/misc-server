@@ -15,11 +15,13 @@ const cronOptions = { timezone: 'Asia/Singapore' };
 
 export const dailyRkTime = async (req, res) => {
   try {
+    const { setReminders } = req.query;
+
     const timings = await getTimings();
 
     const [startTime, endTime] = getCronTimings(timings);
 
-    if (!!startTime && !!endTime) {
+    if (!!startTime && !!endTime && setReminders !== 'false') {
       startCron = cron.schedule(
         `${startTime} *`,
         async () => {
