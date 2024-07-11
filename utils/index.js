@@ -66,3 +66,17 @@ export const parseFrontalParams = (s) => {
 
   return { content, ...args };
 };
+
+export const getInlineButtonMarkup = (...rows) => {
+  // rows.some((row) => row.some((cell) => cell?.length < 2));
+  return {
+    inline_keyboard: [
+      ...rows.map((row) => [
+        ...row.map(([text, callbackData]) => ({
+          text,
+          callback_data: callbackData,
+        })),
+      ]),
+    ],
+  };
+};

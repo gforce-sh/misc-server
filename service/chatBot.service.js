@@ -5,6 +5,7 @@ import { sendTeleMsg } from './telegramMessaging.service.js';
 import { getTimings } from './rkTime.service.js';
 import {
   dayjsDateObj,
+  getInlineButtonMarkup,
   isAuthorizedUser,
   parseFrontalParams,
   wait,
@@ -34,6 +35,10 @@ export const validateUser = (body) => {
   console.log('User is known');
   return false;
 };
+
+const sendConfirmation = (chatId) => sendTeleMsg({ text: '✓', chatId });
+const sendRejection = (chatId) =>
+  sendTeleMsg({ text: 'Something went wrong :(', chatId });
 
 const onStart = async (message) => {
   await sendTeleMsg({ text: 'Welcome!', chatId: message.chat.id });
@@ -112,6 +117,8 @@ const onSimpleText = async ({ chatId, text, date }) => {
       );
       throw err;
     });
+
+  await sendConfirmation(chatId);
 };
 
 export const onCalendarEvent = async (message) => {
@@ -174,6 +181,8 @@ export const onCalendarEvent = async (message) => {
       );
       throw err;
     });
+
+  await sendConfirmation(chatId);
 };
 
 const onGetText = async (message) => {
@@ -211,16 +220,10 @@ const onGetText = async (message) => {
       await sendTeleMsg({
         text: `${userTexts[i].value.slice(0, 50)}...`,
         chatId,
-        replyMarkup: {
-          inline_keyboard: [
-            [
-              {
-                text: '➕',
-                callback_data: `/gt --full --id=${userTexts[i].score}`,
-              },
-            ],
-          ],
-        },
+        replyMarkup: getInlineButtonMarkup([
+          ['➕', `/gt --full --id=${userTexts[i].score}`],
+          ['📛', `/deleteText --id=${userTexts[i].score} --type=text`],
+        ]),
       });
 
       await wait(100);
@@ -262,24 +265,13 @@ const onGetText = async (message) => {
     const item = userTexts[i];
     const content = `${item.value.slice(0, 50)}...`;
 
-    const replyMarkup = {
-      inline_keyboard: [
-        [
-          {
-            text: '➕',
-            callback_data: `/gt --full --id=${item.score}`,
-          },
-          ...((i + 1) % BATCH_SIZE === 0
-            ? [
-                {
-                  text: 'Next batch',
-                  callback_data: `/gt --start=${startIdx + BATCH_SIZE}`,
-                },
-              ]
-            : []),
-        ],
-      ],
-    };
+    const replyMarkup = getInlineButtonMarkup([
+      ['➕', `/gt --full --id=${item.score}`],
+      ['📛', `/deleteText --id=${item.score} --type=text`],
+      ...((i + 1) % BATCH_SIZE === 0
+        ? [['⏩', `/gt --start=${startIdx + BATCH_SIZE}`]]
+        : []),
+    ]);
 
     await sendTeleMsg({
       text: content,
@@ -288,6 +280,31 @@ const onGetText = async (message) => {
     });
 
     await wait(100);
+  }
+};
+
+const onDeleteText = async (message) => {
+  const {
+    data,
+    chat: { id: chatId },
+  } = message;
+  const {
+    args: { id, type },
+  } = parseCommandStatement(data);
+
+  const del = await redis.zRemRangeByScore(
+    `${chatId}:${type}`,
+    id,
+    id,
+    (err) => {
+      console.log('Error in db operation: in deleting item: \n', err);
+    },
+  );
+
+  if (del === 1) {
+    await sendConfirmation(chatId);
+  } else {
+    await sendRejection(chatId);
   }
 };
 
@@ -301,6 +318,7 @@ const commandFuncMapping = {
   '/ce': onCalendarEvent,
   '/getText': onGetText,
   '/gt': onGetText,
+  '/deleteText': onDeleteText,
 };
 
 export const handleIncomingCallback = async (callbackQuery) => {
@@ -317,7 +335,7 @@ export const handleIncomingCallback = async (callbackQuery) => {
       return;
     }
   } catch (err) {
-    await sendTeleMsg({ text: 'Something went wrong :(', chatId: chat.id });
+    await sendRejection(message.chat.id);
     throw err;
   }
 };
@@ -341,7 +359,7 @@ export const handleIncomingMsg = async (message) => {
       return;
     }
   } catch (err) {
-    await sendTeleMsg({ text: 'Something went wrong :(', chatId: chat.id });
+    await sendRejection(chat.id);
     throw err;
   }
 };
@@ -377,7 +395,7 @@ export const findRemindersforUser = async (chatId) => {
     },
   );
 
-  let filteredEvents = [];
+  const filteredEvents = [];
 
   for (const e of events) {
     const { content, remind, actionDate } = parseFrontalParams(e.value);
@@ -387,7 +405,7 @@ export const findRemindersforUser = async (chatId) => {
     switch (remind) {
       case 'once':
         if (actionDate && dayjsDateObj().isSame(dayjs(actionDate), 'date')) {
-          filteredEvents.push(content);
+          filteredEvents.push({ content, id });
         }
         break;
       case 'daily':
@@ -396,17 +414,17 @@ export const findRemindersforUser = async (chatId) => {
           dayjsDateObj().isAfter(dayjs(actionDate), 'date') ||
           dayjsDateObj().isSame(dayjs(actionDate), 'date')
         ) {
-          filteredEvents.push(content);
+          filteredEvents.push({ content, id });
         }
         break;
       case 'weekly':
         if (dayjsDateObj().day() === dayjs(refDate).day()) {
-          filteredEvents.push(content);
+          filteredEvents.push({ content, id });
         }
         break;
       case 'monthly':
         if (dayjsDateObj().date() === dayjs(refDate).date()) {
-          filteredEvents.push(content);
+          filteredEvents.push({ content, id });
         }
         break;
       case 'annually':
@@ -414,25 +432,10 @@ export const findRemindersforUser = async (chatId) => {
           dayjsDateObj().date() === dayjs(refDate).date() &&
           dayjsDateObj().month() === dayjs(refDate).month()
         ) {
-          filteredEvents.push(content);
+          filteredEvents.push({ content, id });
         }
     }
   }
 
   return filteredEvents;
 };
-
-/*
-  // add functionality to edit, delete
-  // To delete:
-  const del = await redis.zRemRangeByScore(
-    `${chatId}:calendarEvent`,
-    '20240629122722',
-    '20240629122722',
-    (err) => {
-      console.log('Error in db operation: in retrieving list: ', err);
-    },
-  );
-
-  console.log('del', del);
-*/

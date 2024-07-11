@@ -6,7 +6,7 @@ import {
   validateUser,
 } from '../service/chatBot.service.js';
 import { sendTeleMsg } from '../service/telegramMessaging.service.js';
-import { wait } from '../utils/index.js';
+import { getInlineButtonMarkup, wait } from '../utils/index.js';
 
 export const gsBotMessaged = async (req, res) => {
   try {
@@ -41,7 +41,13 @@ export const getDaysReminders = async () => {
     }
 
     for (const event of events) {
-      await sendTeleMsg({ text: event, chatId: process.env.CHAT_ID });
+      await sendTeleMsg({
+        text: event.content,
+        chatId: process.env.CHAT_ID,
+        replyMarkup: getInlineButtonMarkup([
+          ['📛', `/deleteText --id=${event.id} --type=calendarEvent`],
+        ]),
+      });
       await wait(100);
     }
   } catch (err) {
