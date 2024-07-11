@@ -1,5 +1,7 @@
 import dayjs from 'dayjs';
 
+export const toStr = (e) => `${e}`;
+
 export const wait = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms || 4000));
 
@@ -68,7 +70,11 @@ export const parseFrontalParams = (s) => {
 };
 
 export const getInlineButtonMarkup = (...rows) => {
-  // rows.some((row) => row.some((cell) => cell?.length < 2));
+  if (rows.some((row) => row.some((cell) => cell?.length < 2))) {
+    throw new Error(
+      'Incomplete data received in getInlineButtonMarkup function',
+    );
+  }
   return {
     inline_keyboard: [
       ...rows.map((row) => [
@@ -79,4 +85,16 @@ export const getInlineButtonMarkup = (...rows) => {
       ]),
     ],
   };
+};
+
+export const getMsgTypeFromCmd = (cmd) => {
+  switch (cmd) {
+    case '/gt':
+    case '/getText':
+      return 'text';
+    case '/gce':
+    case 'getCalendarEvent':
+      return 'calendarEvent';
+  }
+  throw new Error('Cannot get msg type from command');
 };

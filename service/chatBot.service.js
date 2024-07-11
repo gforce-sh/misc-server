@@ -6,8 +6,10 @@ import { getTimings } from './rkTime.service.js';
 import {
   dayjsDateObj,
   getInlineButtonMarkup,
+  getMsgTypeFromCmd,
   isAuthorizedUser,
   parseFrontalParams,
+  toStr,
   wait,
 } from '../utils/index.js';
 import { parseCommandStatement } from '../utils/index.js';
@@ -195,15 +197,22 @@ const onGetText = async (message) => {
   const isCallback = !!callbackData;
 
   const {
-    args: { all, full, start, id },
+    command,
+    args: { full, start, id, type: msgTypeFromCallbackData },
   } = parseCommandStatement(isCallback ? callbackData : text);
 
+  const msgType = isCallback
+    ? msgTypeFromCallbackData
+    : getMsgTypeFromCmd(command);
+
+  if (!msgType) throw new Error('Missing message type');
+
   const userTexts = await redis.zRangeWithScores(
-    `${chatId}:text`,
+    `${chatId}:${msgType}`,
     0,
     -1,
     (err) => {
-      console.log('Error in db operation: in retrieving list: ', err);
+      console.log('Error in retrieving list from DB. Err: ', err);
     },
   );
 
@@ -215,27 +224,14 @@ const onGetText = async (message) => {
     return;
   }
 
-  if (all) {
-    for (let i = 0; i < userTexts.length; i++) {
-      await sendTeleMsg({
-        text: `${userTexts[i].value.slice(0, 50)}...`,
-        chatId,
-        replyMarkup: getInlineButtonMarkup([
-          ['➕', `/gt --full --id=${userTexts[i].score}`],
-          ['📛', `/deleteText --id=${userTexts[i].score} --type=text`],
-        ]),
-      });
-
-      await wait(100);
-    }
-    return;
-  }
-
   if (full) {
-    const content = userTexts.filter((e) => e.score === id)[0];
+    const content = userTexts.filter((t) => toStr(t.score) === id)[0];
     await sendTeleMsg({
-      text: content.value,
+      text: content.value.split(':: ')[1],
       chatId,
+      replyMarkup: getInlineButtonMarkup([
+        ['📛', `/deleteText --id=${content.score} --type=${msgType}`],
+      ]),
     });
     return;
   }
@@ -264,12 +260,13 @@ const onGetText = async (message) => {
   for (let i = startIdx; i < endIdx; i++) {
     const item = userTexts[i];
     const content = `${item.value.slice(0, 50)}...`;
+    const callbackArgs = `--id=${item.score} --type=${msgType}`;
 
     const replyMarkup = getInlineButtonMarkup([
-      ['➕', `/gt --full --id=${item.score}`],
-      ['📛', `/deleteText --id=${item.score} --type=text`],
+      ['➕', `/gt --full ${callbackArgs}`],
+      ['📛', `/deleteText ${callbackArgs}`],
       ...((i + 1) % BATCH_SIZE === 0
-        ? [['⏩', `/gt --start=${startIdx + BATCH_SIZE}`]]
+        ? [['⏩', `/gt --start=${startIdx + BATCH_SIZE} --type=${msgType}`]]
         : []),
     ]);
 
@@ -297,7 +294,7 @@ const onDeleteText = async (message) => {
     id,
     id,
     (err) => {
-      console.log('Error in db operation: in deleting item: \n', err);
+      console.log('Error in deleting item(s) from DB. Err: \n', err);
     },
   );
 
@@ -305,6 +302,7 @@ const onDeleteText = async (message) => {
     await sendConfirmation(chatId);
   } else {
     await sendRejection(chatId);
+    throw new Error('Somehow more than 1 element was found and deleted');
   }
 };
 
@@ -318,6 +316,8 @@ const commandFuncMapping = {
   '/ce': onCalendarEvent,
   '/getText': onGetText,
   '/gt': onGetText,
+  '/getCalendarEvent': onGetText,
+  '/gce': onGetText,
   '/deleteText': onDeleteText,
 };
 
