@@ -60,7 +60,7 @@ const onRknd = async (message) => {
   let day;
   const {
     args: { date, d },
-  } = parseCommandStatement(text);
+  } = parseCommandStatement(message.text);
   const reqDay = date || d;
 
   if (!!reqDay) {
