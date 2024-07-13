@@ -13,7 +13,7 @@ const sendTeleMsgOnce = async ({ text, chatId, replyMarkup }) => {
   await fetch(
     `https://api.telegram.org/bot${
       process.env.BOT_TOKEN
-    }/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}${!!replyMarkup ? `&reply_markup=${JSON.stringify(replyMarkup)}` : ''}`,
+    }/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}${replyMarkup ? `&reply_markup=${JSON.stringify(replyMarkup)}` : ''}`,
   )
     .then((res) => res.json())
     .then((res) => {
@@ -37,6 +37,7 @@ const sendTeleMsgOnce = async ({ text, chatId, replyMarkup }) => {
 export const sendTeleMsg = async (args) => {
   try {
     await sendTeleMsgOnce(args);
+    // eslint-disable-next-line no-unused-vars
   } catch (err) {
     console.log('(2) Trying to send tele msg again after 4s...');
     await wait();
@@ -65,3 +66,8 @@ export const sendTelePhotoOnce = async ({ photoUrl, caption, chatId }) => {
       throw err;
     });
 };
+
+export const sendConfirmation = (chatId) => sendTeleMsg({ text: '✓', chatId });
+
+export const sendRejection = (chatId) =>
+  sendTeleMsg({ text: 'Something went wrong :(', chatId });

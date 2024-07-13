@@ -7,10 +7,6 @@ export const wait = (ms) =>
 
 export const isAuthorizedUser = (id) => [process.env.CHAT_ID].includes(`${id}`);
 
-export const resetCron = (crons) => {
-  crons.forEach((cron) => cron?.stop());
-};
-
 export const dayjsDateObj = (unixdate) => {
   const jsDate = typeof unixdate === 'number' ? new Date(unixdate) : new Date();
   return dayjs(
@@ -85,16 +81,4 @@ export const getInlineButtonMarkup = (...rows) => {
       ]),
     ],
   };
-};
-
-export const getMsgTypeFromCmd = (cmd) => {
-  switch (cmd) {
-    case '/gt':
-    case '/getText':
-      return 'text';
-    case '/gce':
-    case 'getCalendarEvent':
-      return 'calendarEvent';
-  }
-  throw new Error('Cannot get msg type from command');
 };

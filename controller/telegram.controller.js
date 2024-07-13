@@ -1,12 +1,12 @@
 import {
-  findRemindersforUser,
   handleIncomingCallback,
   handleIncomingMsg,
   logBotCommand,
-  validateUser,
 } from '../service/chatBot.service.js';
 import { sendTeleMsg } from '../service/telegramMessaging.service.js';
 import { getInlineButtonMarkup, wait } from '../utils/index.js';
+import { validateUser } from '../service/chatbot-method/user-validate.chatbot.method.js';
+import { findRemindersForUser } from '../service/chatbot-method/calendar-event.chatbot.method.js';
 
 export const gsBotMessaged = async (req, res) => {
   try {
@@ -33,7 +33,7 @@ export const gsBotMessaged = async (req, res) => {
 
 export const getDaysReminders = async () => {
   try {
-    const events = await findRemindersforUser(process.env.CHAT_ID);
+    const events = await findRemindersForUser(process.env.CHAT_ID);
 
     if (!events?.length) {
       console.log('No reminder events found for this day.');

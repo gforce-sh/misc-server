@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 
 import { sendTeleMsg } from './telegramMessaging.service.js';
 import dayjs from 'dayjs';
-import { dayjsDateObj } from '../utils/index.js';
+import { dayjsDateObj, parseCommandStatement } from '../utils/index.js';
 
 export const getTimings = async (url) => {
   const reqUrl = url || process.env.TARGET_URL;
@@ -78,4 +78,42 @@ export const getCronTimings = (timingStr) => {
   );
 
   return [startTime, endTime];
+};
+
+export const onRknd = async (message) => {
+  if (`${message.chat.id}` !== process.env.CHAT_ID) {
+    console.log(
+      'Unauthorized user tried to request /rknd',
+      JSON.stringify(message),
+    );
+    return;
+  }
+
+  await sendTeleMsg({ text: 'Getting info...', chatId: message.chat.id });
+
+  let day;
+  const {
+    args: { date, d },
+  } = parseCommandStatement(message.text);
+  const reqDay = date || d;
+
+  if (reqDay) {
+    console.log('/rknd date arg exists: ', reqDay);
+    if (dayjs(reqDay, 'DD/MM/YYYY', true).isValid()) {
+      console.log('/rknd date arg is valid');
+      day = reqDay;
+    } else {
+      console.log('/rknd date arg is invalid');
+      await sendTeleMsg({
+        text: 'Invalid date, /help for more info.',
+        chatId: message.chat.id,
+      });
+      return;
+    }
+  } else {
+    day = dayjs.unix(message.date).add(1, 'day').format('DD/MM/YYYY');
+  }
+
+  const t = await getTimings(`${process.env.TARGET_URL}&date=${day}`);
+  await sendTeleMsg({ text: t, chatId: message.chat.id });
 };

@@ -1,12 +1,13 @@
 {
   "name": "misc-server",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "main": "app.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "start:nodemon": "nodemon server.js"
+    "start:nodemon": "nodemon server.js",
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "",
@@ -21,7 +22,9 @@
     "redis": "^4.6.14"
   },
   "devDependencies": {
+    "@eslint/js": "^9.6.0",
     "eslint": "^9.5.0",
+    "globals": "^15.8.0",
     "prettier": "^3.3.2"
   }
 }

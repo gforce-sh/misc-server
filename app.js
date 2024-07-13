@@ -30,6 +30,7 @@ app.get('/', (req, res) => {
 app.use('/', personalRouter);
 app.use('/gs-bot', telegramRouter);
 
+// eslint-disable-next-line no-unused-vars
 app.use(async (err, req, res, next) => {
   res.status(err.code || 500).json({ message: err.message });
 });
