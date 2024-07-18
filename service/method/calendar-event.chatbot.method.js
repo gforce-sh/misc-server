@@ -1,14 +1,13 @@
 import dayjs from 'dayjs';
 
 import { redis } from '../../redis.js';
-import { cronOptions, crons, resetCrons } from '../../crons.js';
 import { sendConfirmation, sendTeleMsg } from '../telegramMessaging.service.js';
 import {
   dayjsDateObj,
   parseCommandStatement,
   parseFrontalParams,
+  setReminderCron,
 } from '../../utils/index.js';
-import cron from 'node-cron';
 
 export const onCalendarEvent = async (message) => {
   const {
@@ -89,28 +88,12 @@ export const onCalendarEvent = async (message) => {
       throw err;
     });
 
-  console.log();
-
   if (
     !!userSpecifiedTime &&
     actionDateObj.isSame(dayjsDateObj(), 'day') &&
     actionDateObj.isAfter(dayjsDateObj().add(1, 'minute'), 'minute')
   ) {
-    console.log('setting cron...');
-    const cronKey = `${chatId}:calendarEvent:${timestamp}`;
-    const remindTime = actionDateObj.format('mm H D M');
-
-    crons[cronKey] = cron.schedule(
-      `${remindTime} *`,
-      async () => {
-        console.log(`Executing ${cronKey} remind cron...`);
-        await sendTeleMsg({ text: content, chatId });
-        resetCrons([cronKey]);
-        console.log('Cron stopped and reset');
-      },
-      cronOptions,
-    );
-    console.log('cron set');
+    await setReminderCron({ chatId, timestamp, actionDate, content });
   }
 
   await sendConfirmation(chatId);
@@ -138,8 +121,20 @@ export const findRemindersForUser = async (chatId) => {
 
     switch (remind) {
       case 'once':
-        if (actionDate && dayjsDateObj().isSame(dayjs(refDate), 'date')) {
+        if (actionDate && dayjsDateObj().isSame(dayjs(actionDate), 'date')) {
           filteredEvents.push({ content, id });
+          try {
+            await setReminderCron({
+              chatId,
+              timestamp: id,
+              actionDate,
+              content,
+            });
+          } catch (err) {
+            console.log(
+              "Error in setting cron for setting an individual reminder in 'findRemindersForUser' func",
+            );
+          }
         }
         break;
       case 'daily':

@@ -1,10 +1,10 @@
 import { sendRejection, sendTeleMsg } from './telegramMessaging.service.js';
-import { onCalendarEvent } from './chatbot-method/calendar-event.chatbot.method.js';
+import { onCalendarEvent } from './method/calendar-event.chatbot.method.js';
 import {
   onDeleteText,
   onGetText,
   onSimpleText,
-} from './chatbot-method/text.chatbot.method.js';
+} from './method/text.chatbot.method.js';
 import { onRknd } from './rkTime.service.js';
 
 const onStart = async (message) => {

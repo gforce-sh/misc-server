@@ -1,4 +1,7 @@
 import dayjs from 'dayjs';
+import { cronOptions, crons, resetCrons } from '../crons.js';
+import cron from 'node-cron';
+import { sendTeleMsg } from '../service/telegramMessaging.service.js';
 
 export const toStr = (e) => `${e}`;
 
@@ -81,4 +84,22 @@ export const getInlineButtonMarkup = (...rows) => {
       ]),
     ],
   };
+};
+
+export const setReminderCron = ({ chatId, timestamp, actionDate, content }) => {
+  console.log('setting cron...');
+  const cronKey = `${chatId}:calendarEvent:${timestamp}`;
+  const remindTime = dayjs(actionDate).format('mm H D M');
+
+  crons[cronKey] = cron.schedule(
+    `${remindTime} *`,
+    async () => {
+      console.log(`Executing ${cronKey} remind cron...`);
+      await sendTeleMsg({ text: content, chatId });
+      resetCrons([cronKey]);
+      console.log(cronKey, ' cron stopped and reset');
+    },
+    cronOptions,
+  );
+  console.log('cron set');
 };

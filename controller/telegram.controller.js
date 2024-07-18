@@ -5,8 +5,8 @@ import {
 } from '../service/chatBot.service.js';
 import { sendTeleMsg } from '../service/telegramMessaging.service.js';
 import { getInlineButtonMarkup, wait } from '../utils/index.js';
-import { validateUser } from '../service/chatbot-method/user-validate.chatbot.method.js';
-import { findRemindersForUser } from '../service/chatbot-method/calendar-event.chatbot.method.js';
+import { validateUser } from '../service/method/user-validate.chatbot.method.js';
+import { findRemindersForUser } from '../service/method/calendar-event.chatbot.method.js';
 
 export const gsBotMessaged = async (req, res) => {
   try {
@@ -48,7 +48,7 @@ export const getDaysReminders = async () => {
           ['📛', `/deleteText --id=${event.id} --type=calendarEvent`],
         ]),
       });
-      await wait(100);
+      await wait(25);
     }
   } catch (err) {
     console.error('Printing full error: ', err);

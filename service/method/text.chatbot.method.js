@@ -139,7 +139,7 @@ export const onGetText = async (message) => {
       replyMarkup,
     });
 
-    await wait(100);
+    await wait(25);
   }
 };
 
@@ -152,14 +152,18 @@ export const onDeleteText = async (message) => {
     args: { id, type },
   } = parseCommandStatement(data);
 
-  const del = await redis.zRemRangeByScore(
-    `${chatId}:${type}`,
-    id,
-    id,
-    (err) => {
+  const del = await redis
+    .zRemRangeByScore(`${chatId}:${type}`, id, id, (err) => {
       console.log('Error in deleting item(s) from DB. Err: \n', err);
-    },
-  );
+    })
+    .then((r) => {
+      console.log(`${id} id in ${chatId}:${type} deleted successfully.`);
+      return r;
+    })
+    .catch((err) => {
+      console.log('Error in delete operation');
+      throw err;
+    });
 
   if (del === 1) {
     await sendConfirmation(chatId);
