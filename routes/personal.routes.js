@@ -18,7 +18,7 @@ router.get('/daily-rk-time', async (req, res, next) => {
   }
 });
 
-router.get('/test', async (req, res, next) => {
+router.get('/print-active-crons', async (req, res, next) => {
   try {
     console.log('crons', crons);
     res.status(200).json('success');
