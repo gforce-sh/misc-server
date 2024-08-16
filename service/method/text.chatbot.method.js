@@ -3,7 +3,6 @@ import {
   getInlineButtonMarkup,
   parseCommandStatement,
   toStr,
-  wait,
 } from '../../utils/index.js';
 import { redis } from '../../redis.js';
 import {
