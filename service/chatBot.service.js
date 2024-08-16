@@ -1,5 +1,5 @@
 import { sendRejection, sendTeleMsg } from './telegramMessaging.service.js';
-import { onCalendarEvent } from './method/calendar-event.chatbot.method.js';
+import { onCalendarEvent } from './method/calendarEvent.chatbot.method.js';
 import {
   onDeleteText,
   onGetText,

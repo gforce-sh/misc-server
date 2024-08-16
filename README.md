@@ -28,3 +28,7 @@
 
 `https://api.telegram.org/bot<id>/setWebhook?url=<webhookUrl>`
 
+## Running ngrok
+
+- Run command `ngrk 3000` to expose port 3000.
+

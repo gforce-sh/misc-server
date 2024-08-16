@@ -78,6 +78,8 @@ export const onGetText = async (message) => {
     },
   );
 
+  userTexts.reverse();
+
   if (!userTexts.length) {
     await sendTeleMsg({
       text: 'No texts found.',
@@ -99,7 +101,7 @@ export const onGetText = async (message) => {
     return;
   }
 
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 6;
   let startIdx = 0;
   let endIdx = startIdx + BATCH_SIZE;
 
@@ -138,8 +140,6 @@ export const onGetText = async (message) => {
       chatId,
       replyMarkup,
     });
-
-    await wait(25);
   }
 };
 

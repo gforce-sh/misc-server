@@ -112,6 +112,8 @@ export const findRemindersForUser = async (chatId) => {
     },
   );
 
+  events.reverse();
+
   const filteredEvents = [];
 
   for (const e of events) {
@@ -140,8 +142,8 @@ export const findRemindersForUser = async (chatId) => {
       case 'daily':
         if (
           !actionDate ||
-          dayjsDateObj().isAfter(dayjs(actionDate), 'date') ||
-          dayjsDateObj().isSame(dayjs(actionDate), 'date')
+          dayjsDateObj().isAfter(dayjs(refDate), 'date') ||
+          dayjsDateObj().isSame(dayjs(refDate), 'date')
         ) {
           filteredEvents.push({ content, id });
         }

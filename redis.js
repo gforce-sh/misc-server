@@ -6,7 +6,6 @@ dotenv.config();
 export const reconnectStrategy = (retries, error) => {
   if (error && error.code === 'ECONNREFUSED') {
     // End reconnecting on a specific error and flush all commands with an individual error
-    console.log('>>>here!!', JSON.stringify(error));
     return new Error('The server refused the connection');
   }
   if (retries > 3) {
@@ -24,8 +23,8 @@ const connectDB = async () => {
     socket: {
       host: process.env.REDIS_DB_HOST,
       port: process.env.REDIS_DB_PORT,
-      reconnectStrategy,
-    },
+      reconnectStrategy
+    }
   })
     .on('error', (err) => console.log('Redis Client Error', err))
     .on('connect', () => console.log('Connected to Redis Client'))

@@ -5,8 +5,8 @@ import {
 } from '../service/chatBot.service.js';
 import { sendTeleMsg } from '../service/telegramMessaging.service.js';
 import { getInlineButtonMarkup, wait } from '../utils/index.js';
-import { validateUser } from '../service/method/user-validate.chatbot.method.js';
-import { findRemindersForUser } from '../service/method/calendar-event.chatbot.method.js';
+import { validateUser } from '../service/method/userValidate.chatbot.method.js';
+import { findRemindersForUser } from '../service/method/calendarEvent.chatbot.method.js';
 
 export const gsBotMessaged = async (req, res) => {
   try {
