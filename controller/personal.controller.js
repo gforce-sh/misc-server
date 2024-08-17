@@ -17,32 +17,36 @@ export const dailyRkTime = async (req, res, next) => {
 
     const [startTime, endTime] = getCronTimings(timings);
 
-    if (!!startTime && !!endTime && setReminders !== 'false') {
-      crons.rkStartCron = cron.schedule(
-        `${startTime} *`,
-        async () => {
-          console.log('Executing RKt start cron...');
-          await sendTimings('RKt starting 5');
-          console.log('RKt start cron complete');
-        },
-        cronOptions,
-      );
+    if (setReminders !== 'false') {
+      if (!!startTime && !!endTime) {
+        crons.rkStartCron = cron.schedule(
+          `${startTime} *`,
+          async () => {
+            console.log('Executing RKt start cron...');
+            await sendTimings('RKt starting 5');
+            console.log('RKt start cron complete');
+          },
+          cronOptions,
+        );
 
-      crons.rkEndCron = cron.schedule(
-        `${endTime} *`,
-        async () => {
-          console.log('Executing RKt end cron...');
-          await sendTimings('RKt ended');
-          console.log('RKt end cron complete');
-          resetCrons(['rkStartCron', 'rkEndCron']);
-          console.log('RKt crons stopped and reset');
-        },
-        cronOptions,
-      );
+        crons.rkEndCron = cron.schedule(
+          `${endTime} *`,
+          async () => {
+            console.log('Executing RKt end cron...');
+            await sendTimings('RKt ended');
+            console.log('RKt end cron complete');
+            resetCrons(['rkStartCron', 'rkEndCron']);
+            console.log('RKt crons stopped and reset');
+          },
+          cronOptions,
+        );
+      } else {
+        throw new Error('Crons not set as either start or end time missing.');
+      }
+      console.log('Crons set');
     } else {
-      throw new Error('Crons not set as either start or end time missing.');
+      console.log('Skipping cron creation');
     }
-    console.log('Crons set');
 
     await sendTimings(timings);
     console.log('Daily-rk-time request successfully completed');
