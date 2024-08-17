@@ -1,6 +1,6 @@
 {
   "name": "misc-server",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "main": "app.js",
   "type": "module",
   "scripts": {
