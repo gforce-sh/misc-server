@@ -20,6 +20,6 @@ export const sendDoggoInfo = async (only) => {
 
   if (only === 'nc' || all) {
     console.log('(1) Attempting to send doggo msg to NC...');
-    await sendTeleMsg(info.facts[0], process.env.N_CHAT_ID);
+    await sendTeleMsg({ text: info.facts[0], chatId: process.env.N_CHAT_ID });
   }
 };
