@@ -12,14 +12,15 @@ export const sendDoggoInfo = async (only) => {
     });
 
   const all = !only;
+  const text = `Your daily doggo fact:\n\n${info.facts[0]}`;
 
   if (only === 'gs' || all) {
     console.log('(1) Attempting to send doggo msg to GS...');
-    await sendTeleMsg({ text: info.facts[0], chatId: process.env.CHAT_ID });
+    await sendTeleMsg({ text, chatId: process.env.CHAT_ID });
   }
 
   if (only === 'nc' || all) {
     console.log('(1) Attempting to send doggo msg to NC...');
-    await sendTeleMsg({ text: info.facts[0], chatId: process.env.N_CHAT_ID });
+    await sendTeleMsg({ text, chatId: process.env.N_CHAT_ID });
   }
 };
